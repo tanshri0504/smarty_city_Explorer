@@ -1,183 +1,118 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import pydeck as pdk
 import plotly.express as px
-from math import radians, cos, sin, asin, sqrt
+import folium
+from streamlit_folium import st_folium
+import requests
+from sklearn.linear_model import LinearRegression
 
 # ---------------- CONFIG ----------------
-st.set_page_config(page_title="Smart City Explorer Pro", layout="wide")
-
-# ---------------- CUSTOM CSS ----------------
-st.markdown("""
-<style>
-.main {
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: white;
-}
-.card {
-    padding: 20px;
-    border-radius: 15px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    margin: 10px 0;
-}
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Smart City Ultimate", layout="wide")
 
 # ---------------- SIDEBAR ----------------
-st.sidebar.title("🌆 Smart City Explorer PRO")
+st.sidebar.title("🌆 Smart City Ultimate")
 page = st.sidebar.radio("Navigation", [
     "🏠 Dashboard",
-    "🗺️ Smart Map",
+    "🗺️ Live Map",
     "📊 Analytics",
-    "📍 Nearby",
-    "🤖 AI Insights",
-    "📂 Upload Data"
+    "🌦️ Weather",
+    "🤖 AI Prediction",
+    "💬 Chatbot"
 ])
 
 # ---------------- SAMPLE DATA ----------------
-np.random.seed(1)
+np.random.seed(10)
 data = pd.DataFrame({
-    "lat": np.random.uniform(21.10, 21.20, 150),
-    "lon": np.random.uniform(79.05, 79.15, 150),
-    "type": np.random.choice(["Hospital", "Restaurant", "School", "Police"], 150),
-    "name": [f"Location {i}" for i in range(150)]
+    "lat": np.random.uniform(21.10, 21.20, 50),
+    "lon": np.random.uniform(79.05, 79.15, 50),
+    "type": np.random.choice(["Hospital","Restaurant","School","Police"],50),
+    "name": [f"Place {i}" for i in range(50)]
 })
-
-# ---------------- COLOR MAP ----------------
-color_map = {
-    "Hospital": [255, 0, 0],
-    "Restaurant": [0, 255, 0],
-    "School": [0, 0, 255],
-    "Police": [255, 255, 0]
-}
-
-data["color"] = data["type"].map(color_map)
-
-# ---------------- DISTANCE ----------------
-def distance(lat1, lon1, lat2, lon2):
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    return 6371 * 2 * asin(sqrt(
-        sin((lat2 - lat1)/2)**2 +
-        cos(lat1)*cos(lat2)*sin((lon2 - lon1)/2)**2
-    ))
 
 # ---------------- DASHBOARD ----------------
 if page == "🏠 Dashboard":
-    st.title("🚀 Smart City Dashboard")
+    st.title("🚀 Smart City Ultimate Dashboard")
 
     col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Hospitals", len(data[data["type"]=="Hospital"]))
+    col2.metric("Restaurants", len(data[data["type"]=="Restaurant"]))
+    col3.metric("Schools", len(data[data["type"]=="School"]))
+    col4.metric("Police", len(data[data["type"]=="Police"]))
 
-    col1.metric("🏥 Hospitals", len(data[data["type"]=="Hospital"]))
-    col2.metric("🍽️ Restaurants", len(data[data["type"]=="Restaurant"]))
-    col3.metric("🏫 Schools", len(data[data["type"]=="School"]))
-    col4.metric("🚓 Police", len(data[data["type"]=="Police"]))
-
-    st.markdown("### 📈 Live Distribution")
-    fig = px.histogram(data, x="type", color="type", animation_frame=None)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(px.histogram(data, x="type", color="type"))
 
 # ---------------- MAP ----------------
-elif page == "🗺️ Smart Map":
-    st.title("🗺️ Smart Interactive Map")
+elif page == "🗺️ Live Map":
+    st.title("🗺️ Live Smart Map")
 
-    category = st.multiselect(
-        "Select Categories",
-        options=data["type"].unique(),
-        default=data["type"].unique()
-    )
+    m = folium.Map(location=[21.1458, 79.0882], zoom_start=12)
 
-    filtered = data[data["type"].isin(category)]
+    for i in range(len(data)):
+        folium.Marker(
+            [data.iloc[i]["lat"], data.iloc[i]["lon"]],
+            popup=f"{data.iloc[i]['name']} ({data.iloc[i]['type']})"
+        ).add_to(m)
 
-    st.pydeck_chart(pdk.Deck(
-        initial_view_state=pdk.ViewState(
-            latitude=21.1458,
-            longitude=79.0882,
-            zoom=11,
-            pitch=45,
-        ),
-        layers=[
-            pdk.Layer(
-                "ScatterplotLayer",
-                data=filtered,
-                get_position='[lon, lat]',
-                get_color="color",
-                get_radius=300,
-                pickable=True,
-            ),
-        ],
-        tooltip={"text": "{name}\nType: {type}"}
-    ))
+    st_folium(m, width=700, height=500)
 
 # ---------------- ANALYTICS ----------------
 elif page == "📊 Analytics":
-    st.title("📊 Advanced Analytics")
+    st.title("📊 City Analytics")
 
     df = pd.DataFrame({
         "Area": ["A","B","C","D"],
-        "Population": np.random.randint(50000, 100000, 4),
-        "Pollution": np.random.randint(100, 200, 4),
-        "Traffic": np.random.randint(50, 100, 4)
+        "Population": np.random.randint(50000,100000,4),
+        "Pollution": np.random.randint(100,200,4)
     })
 
-    tab1, tab2, tab3 = st.tabs(["Population", "Pollution", "Traffic"])
+    st.plotly_chart(px.bar(df, x="Area", y="Population"))
+    st.plotly_chart(px.pie(df, names="Area", values="Pollution"))
 
-    with tab1:
-        st.plotly_chart(px.bar(df, x="Area", y="Population", color="Area"))
-
-    with tab2:
-        st.plotly_chart(px.pie(df, names="Area", values="Pollution"))
-
-    with tab3:
-        st.plotly_chart(px.line(df, x="Area", y="Traffic", markers=True))
-
-# ---------------- NEARBY ----------------
-elif page == "📍 Nearby":
-    st.title("📍 Nearby Smart Finder")
-
-    user_lat = st.slider("Latitude", 21.10, 21.20, 21.1458)
-    user_lon = st.slider("Longitude", 79.05, 79.15, 79.0882)
-
-    data["dist"] = data.apply(
-        lambda x: distance(user_lat, user_lon, x["lat"], x["lon"]), axis=1
-    )
-
-    nearest = data.sort_values("dist").head(10)
-
-    st.dataframe(nearest)
-
-# ---------------- AI ----------------
-elif page == "🤖 AI Insights":
-    st.title("🤖 AI Urban Intelligence")
+# ---------------- WEATHER ----------------
+elif page == "🌦️ Weather":
+    st.title("🌦️ Live Weather")
 
     city = st.text_input("Enter City")
 
-    if st.button("Generate Insights"):
-        if city:
-            st.success(f"Analysis for {city}")
+    if st.button("Get Weather"):
+        api_key = "YOUR_API_KEY"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
 
-            score = np.random.randint(60, 95)
+        res = requests.get(url)
+        data_api = res.json()
 
-            st.progress(score/100)
-            st.metric("Safety Score", score)
+        if res.status_code == 200:
+            st.success(f"Temperature: {data_api['main']['temp']} °C")
+            st.info(f"Weather: {data_api['weather'][0]['description']}")
+        else:
+            st.error("City not found")
 
-            st.info("✔️ Best Area: Central Zone")
-            st.warning("⚠️ Traffic: Moderate")
-            st.success("🌿 Air Quality: Good")
+# ---------------- AI PREDICTION ----------------
+elif page == "🤖 AI Prediction":
+    st.title("🤖 Traffic Prediction")
 
-# ---------------- UPLOAD ----------------
-elif page == "📂 Upload Data":
-    st.title("📂 Smart Data Analyzer")
+    X = np.array([[1],[2],[3],[4],[5]])
+    y = np.array([50,60,65,80,90])
 
-    file = st.file_uploader("Upload CSV")
+    model = LinearRegression()
+    model.fit(X,y)
 
-    if file:
-        df = pd.read_csv(file)
+    day = st.slider("Select Day",1,10)
 
-        st.dataframe(df)
+    pred = model.predict([[day]])
+    st.success(f"Predicted Traffic: {int(pred[0])}")
 
-        col = st.selectbox("Select Column", df.columns)
+# ---------------- CHATBOT ----------------
+elif page == "💬 Chatbot":
+    st.title("💬 Smart City Chatbot")
 
-        st.plotly_chart(px.histogram(df, x=col, color_discrete_sequence=["cyan"]))
+    user_input = st.text_input("Ask something")
+
+    if user_input:
+        if "hospital" in user_input.lower():
+            st.write("🏥 Nearest hospital is 2 km away")
+        elif "traffic" in user_input.lower():
+            st.write("🚗 Traffic is moderate today")
+        else:
+            st.write("🤖 I'm your smart assistant!")
