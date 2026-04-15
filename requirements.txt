@@ -1,6 +1,9 @@
-streamlit
-pandas
-numpy
-pydeck
-plotly
-foluim
+streamlit==1.33.0
+pandas==2.2.2
+numpy==1.26.4
+plotly==5.20.0
+folium==0.15.1
+streamlit-folium==0.18.0
+requests==2.31.0
+scikit-learn==1.4.2
+geopy==2.4.1
