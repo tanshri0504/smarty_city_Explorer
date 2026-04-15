@@ -31,20 +31,29 @@ data = pd.DataFrame({
     "name": [f"Place {i}" for i in range(100)]
 })
 
-# ---------------- HOME ----------------
+# ---------------- DISTANCE FUNCTION ----------------
+def calculate_distance(lat1, lon1, lat2, lon2):
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+    return 6371 * c
+
+# ---------------- PAGES ----------------
+# IMPORTANT: Proper if-elif chain (fixes your error)
+
 if page == "🏠 Home":
     st.title("🚀 Smart City Explorer")
     st.markdown("### All-in-One Urban Intelligence Dashboard")
 
     col1, col2, col3 = st.columns(3)
-
     col1.metric("🏥 Hospitals", 25)
     col2.metric("🍽️ Restaurants", 40)
     col3.metric("🚓 Police Stations", 15)
 
     st.success("✔️ Real-time city insights at your fingertips!")
 
-# ---------------- MAP ----------------
 elif page == "🗺️ Map":
     st.title("🗺️ Interactive City Map")
 
@@ -75,7 +84,6 @@ elif page == "🗺️ Map":
         tooltip={"text": "{name}\nType: {type}"}
     ))
 
-# ---------------- ANALYTICS ----------------
 elif page == "📊 Analytics":
     st.title("📊 City Analytics Dashboard")
 
@@ -99,12 +107,10 @@ elif page == "📊 Analytics":
     fig = px.pie(df, names="Area", values="Pollution", title="Pollution Levels")
     st.plotly_chart(fig, use_container_width=True)
 
-# ---------------- EMERGENCY ----------------
 elif page == "🚨 Emergency":
     st.title("🚨 Emergency Dashboard")
 
     st.error("🚑 Emergency Contacts")
-
     st.write("""
     - Police: 100
     - Ambulance: 102
@@ -114,7 +120,6 @@ elif page == "🚨 Emergency":
     if st.button("🚨 Send Emergency Alert"):
         st.success("Alert Sent Successfully!")
 
-# ---------------- AI INSIGHTS ----------------
 elif page == "🤖 AI Insights":
     st.title("🤖 AI City Insights")
 
@@ -123,29 +128,13 @@ elif page == "🤖 AI Insights":
     if st.button("Analyze"):
         if city:
             score = np.random.randint(60, 95)
-
             st.subheader(f"🏙️ {city} Analysis")
-
             st.write(f"✔️ Safety Score: {score}/100")
             st.write("✔️ Best Area: Central Zone")
             st.write("✔️ Traffic: Moderate")
         else:
             st.warning("Enter city name")
 
-# ---------------- DISTANCE FUNCTION ----------------
-def calculate_distance(lat1, lon1, lat2, lon2):
-    # Haversine Formula
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a))
-
-    return 6371 * c
-
-# ---------------- NEARBY ----------------
 elif page == "📍 Nearby Services":
     st.title("📍 Nearby Services")
 
@@ -161,19 +150,16 @@ elif page == "📍 Nearby Services":
     st.write("### Closest Locations")
     st.dataframe(nearest[["name", "type", "distance"]])
 
-# ---------------- BOOKING ----------------
 elif page == "📅 Booking":
     st.title("📅 Booking System")
 
     service = st.selectbox("Select Service", ["Hospital", "Restaurant"])
-
     name = st.text_input("Your Name")
     date = st.date_input("Select Date")
 
     if st.button("Book Now"):
         st.success(f"{service} booked successfully for {name} on {date}")
 
-# ---------------- UPLOAD ----------------
 elif page == "📂 Upload Data":
     st.title("📂 Upload & Analyze Data")
 
